@@ -18,5 +18,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/series', [SeriesController::class, 'listSeries']);
-Route::get('/series/new', [SeriesController::class, 'createSeries']);
+Route::resource('/series', SeriesController::class)->except('show');
+// Route::controller(SeriesController::class)->group(function () {
+//     Route::get('/series', 'index')->name('series.index');
+//     Route::get('/series/new', 'create')->name('series.create');
+//     Route::post('/series/save', 'store')->name('series.store');
+// });
+
+// Route::delete('/series/destroy/{serie}', [SeriesController::class, 'destroy'])->name('series.destroy');
