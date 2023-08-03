@@ -1,5 +1,5 @@
 <x-layout title="New Series">
-  <x-series.form :action="route('series.store')" />
+  <x-series.form :action="route('series.store')" :name="old('name')" :seasonsQty="old('seasonsQty')" :episodesPerSeason="old('episodesPerSeason')" :update="false" />
   <!-- <form action="{{ route('series.store') }}" method="post">
     @csrf
     <div class="mb-3">

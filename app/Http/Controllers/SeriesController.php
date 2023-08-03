@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SeriesFromRequest;
+use App\Models\Episodes;
+use App\Models\Season;
 use App\Models\Series;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +13,8 @@ class SeriesController extends Controller
 {
     public function index(Request $request)
     {
-        $series = Series::query()->orderBy('name')->get();
+        // $series = Series::query()->orderBy('name')->get();
+        $series = Series::all();
         $deleteMessage = session('delete.message');
         $addMessage = session('add.message');
         // $deleteMessage = $request->session()->get('delete.message');
@@ -24,9 +28,32 @@ class SeriesController extends Controller
         return view('series.create');
     }
 
-    public function store(Request $request)
+    public function store(SeriesFromRequest $request)
     {
         $series = Series::create($request->all());
+        $seasons = [];
+        for ($i = 1; $i <= $request->seasonsQty; $i++) {
+            $seasons[] = [
+                'series_id' => $series->id,
+                'number' => $i,
+            ];
+        }
+        Season::insert($seasons);
+
+        $episodes = [];
+        foreach ($series->seasons as $season) {
+            for ($j = 1; $j <= $request->episodesPerSeason; $j++) {
+                $episodes[] = [
+                    'seasons_id' => $season->id,
+                    'number' => $j,
+                ];
+            }
+        }
+        Episodes::insert($episodes);
+
+        // $request->validate([
+        //     'name' => ['required', 'min:3']
+        // ]);
         // $request->session()->flash('add.message', "Series '{$serie->name}'  added with success");
         return redirect(route('series.index'))->with('add.message', "Series '{$series->name}'  added with success");
     }
@@ -43,11 +70,30 @@ class SeriesController extends Controller
 
     public function edit(Series $series)
     {
-        return redirect(route('series.edit'))->with('series', $series);
+        return view('series.edit')->with('series', $series);
     }
 
-    public function update(Series $series, Request $request)
+    public function update(Series $series, SeriesFromRequest $request)
     {
-        return redirect(route('series.edit'))->with('series', $series);
+        $series->fill($request->all());
+        $series->save();
+
+        // Optional: Update seasons and episodes (similar to the store method)
+        // Note: This is just a suggestion, and you may need to modify it based on your data structure
+        for ($i = 1; $i <= $request->seasonsQty; $i++) {
+            $season = $series->seasons()->updateOrCreate(
+                ['number' => $i],
+                ['series_id' => $series->id]
+            );
+
+            for ($j = 1; $j <= $request->episodesPerSeason; $j++) {
+                $season->episodes()->updateOrCreate(
+                    ['number' => $j],
+                    ['season_id' => $season->id]
+                );
+            }
+        }
+
+        return redirect(route('series.index'))->with('add.message', "Series '{$series->name}' updated with success");
     }
 }
