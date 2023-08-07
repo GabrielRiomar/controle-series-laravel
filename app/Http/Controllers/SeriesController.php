@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SeriesFromRequest;
-use App\Models\Episodes;
-use App\Models\Season;
 use App\Models\Series;
+use App\Repositories\SeriesRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class SeriesController extends Controller
 {
+    public function __construct(private SeriesRepository $repository)
+    {
+    }
+
     public function index(Request $request)
     {
         // $series = Series::query()->orderBy('name')->get();
@@ -30,27 +32,7 @@ class SeriesController extends Controller
 
     public function store(SeriesFromRequest $request)
     {
-        $series = Series::create($request->all());
-        $seasons = [];
-        for ($i = 1; $i <= $request->seasonsQty; $i++) {
-            $seasons[] = [
-                'series_id' => $series->id,
-                'number' => $i,
-            ];
-        }
-        Season::insert($seasons);
-
-        $episodes = [];
-        foreach ($series->seasons as $season) {
-            for ($j = 1; $j <= $request->episodesPerSeason; $j++) {
-                $episodes[] = [
-                    'seasons_id' => $season->id,
-                    'number' => $j,
-                ];
-            }
-        }
-        Episodes::insert($episodes);
-
+        $series = $this->repository->add($request);
         // $request->validate([
         //     'name' => ['required', 'min:3']
         // ]);
